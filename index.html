@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MODEL ARCHIVE</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=IBM+Plex+Mono:wght@300;400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -191,6 +192,32 @@ h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(60px,9vw,120px);line-heig
 .cover-upload-btn{position:absolute;right:0;top:0;height:100%;padding:0 12px;background:rgba(200,169,110,0.1);border:1px solid rgba(200,169,110,0.25);border-radius:0 var(--radius-sm) var(--radius-sm) 0;color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
 .cover-upload-btn:hover{background:rgba(200,169,110,0.18);}
 .cover-upload-input{position:absolute;right:0;top:0;height:100%;width:100px;opacity:0;cursor:pointer;}
+
+/* AUTH SCREEN */
+#authScreen{position:fixed;inset:0;z-index:400;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:2rem;}
+.auth-box{width:100%;max-width:420px;background:rgba(12,16,26,0.95);border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:2.5rem;box-shadow:0 40px 80px rgba(0,0,0,0.6);}
+.auth-logo{font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:0.06em;background:linear-gradient(135deg,#fff 0%,rgba(255,255,255,0.5) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:0.25rem;}
+.auth-sub{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:2rem;}
+.auth-tabs{display:flex;gap:4px;background:rgba(255,255,255,0.04);border-radius:8px;padding:4px;margin-bottom:1.75rem;}
+.auth-tab{flex:1;background:transparent;border:none;padding:8px;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.08em;color:var(--text-secondary);cursor:pointer;transition:all 0.18s;}
+.auth-tab.active{background:rgba(200,169,110,0.12);color:var(--accent);border:1px solid rgba(200,169,110,0.25);}
+.auth-field{margin-bottom:1rem;}
+.auth-field label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:6px;}
+.auth-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-sm);padding:11px 14px;color:var(--text-primary);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:300;outline:none;transition:border-color 0.2s;}
+.auth-input::placeholder{color:var(--text-dim);}
+.auth-input:focus{border-color:rgba(200,169,110,0.4);}
+.auth-btn{width:100%;margin-top:0.5rem;padding:13px;background:rgba(200,169,110,0.12);border:1px solid rgba(200,169,110,0.4);border-radius:var(--radius-sm);color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;}
+.auth-btn:hover{background:rgba(200,169,110,0.2);}
+.auth-btn:disabled{opacity:0.4;cursor:not-allowed;}
+.auth-msg{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;margin-top:1rem;min-height:18px;text-align:center;}
+.auth-msg.error{color:var(--danger);}
+.auth-msg.success{color:#6dbf8a;}
+.auth-notice{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:0.06em;text-align:center;margin-top:1.25rem;line-height:1.7;}
+/* USER BADGE in header */
+.user-badge{display:flex;align-items:center;gap:10px;padding-bottom:0.5rem;}
+.user-email{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-secondary);letter-spacing:0.08em;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.signout-btn{background:transparent;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:5px 12px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;transition:all 0.18s;white-space:nowrap;}
+.signout-btn:hover{border-color:rgba(224,92,106,0.4);color:var(--danger);}
 footer{position:relative;z-index:2;border-top:1px solid var(--glass-border);padding:1.5rem 2rem;display:flex;justify-content:space-between;align-items:center;max-width:1400px;margin:0 auto;}
 .footer-text{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:0.12em;}
 </style>
@@ -201,6 +228,29 @@ footer{position:relative;z-index:2;border-top:1px solid var(--glass-border);padd
   <div class="loading-logo">MODEL ARCHIVE</div>
   <div class="loading-bar-wrap"><div class="loading-bar" id="loadingBar"></div></div>
   <div class="loading-label" id="loadingLabel">Connecting to Cloudinary…</div>
+</div>
+
+<!-- AUTH SCREEN -->
+<div id="authScreen">
+  <div class="auth-box">
+    <div class="auth-logo">MODEL ARCHIVE</div>
+    <div class="auth-sub">// Portfolio Management System</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabSignin" onclick="switchTab('signin')">SIGN IN</button>
+      <button class="auth-tab" id="tabSignup" onclick="switchTab('signup')">SIGN UP</button>
+    </div>
+    <div class="auth-field">
+      <label>Email</label>
+      <input class="auth-input" id="authEmail" type="email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')authSubmit()">
+    </div>
+    <div class="auth-field">
+      <label>Password</label>
+      <input class="auth-input" id="authPassword" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')authSubmit()">
+    </div>
+    <button class="auth-btn" id="authBtn" onclick="authSubmit()">SIGN IN</button>
+    <div class="auth-msg" id="authMsg"></div>
+    <div class="auth-notice" id="authNotice">Forgot password? <span style="color:var(--accent);cursor:pointer" onclick="sendReset()">Send reset link</span></div>
+  </div>
 </div>
 
 <div class="ambient">
@@ -218,6 +268,7 @@ footer{position:relative;z-index:2;border-top:1px solid var(--glass-border);padd
         <h1>MODEL<br>GALLERY</h1>
       </div>
       <div class="header-right">
+        <div class="user-badge"><span class="user-email" id="userEmail"></span><button class="signout-btn" onclick="signOut()">Sign Out</button></div>
         <div class="count-display"><span id="totalCount">0</span></div>
         <div class="count-label">PROFILES INDEXED</div>
       </div>
@@ -921,9 +972,109 @@ document.addEventListener('keydown', e => {
   if (e.key==='Escape') document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open'));
 });
 
+// ── SUPABASE AUTH ─────────────────────────────────────────────
+// Replace these with your actual Supabase project values
+// Config is loaded from /api/config at runtime (set via Vercel env vars)
+let sb = null;
+let currentUser = null;
+
+async function initSupabase() {
+  try {
+    const res = await fetch('/api/config');
+    if (!res.ok) throw new Error('Config endpoint returned ' + res.status);
+    const { url, key } = await res.json();
+    sb = supabase.createClient(url, key);
+    // Now safe to listen for auth state
+    sb.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        showApp(session.user);
+      }
+    });
+  } catch(e) {
+    console.error('Failed to load config:', e);
+    setAuthMsg('Configuration error — check Vercel env vars', 'error');
+    document.getElementById('authBtn').disabled = true;
+  }
+}
+let authMode = 'signin';
+
+function switchTab(mode) {
+  authMode = mode;
+  document.getElementById('tabSignin').classList.toggle('active', mode==='signin');
+  document.getElementById('tabSignup').classList.toggle('active', mode==='signup');
+  document.getElementById('authBtn').textContent = mode==='signin' ? 'SIGN IN' : 'CREATE ACCOUNT';
+  document.getElementById('authMsg').textContent = '';
+  document.getElementById('authNotice').style.display = mode==='signin' ? 'block' : 'none';
+}
+
+function setAuthMsg(msg, type) {
+  const el = document.getElementById('authMsg');
+  el.textContent = msg;
+  el.className = 'auth-msg ' + (type||'');
+}
+
+async function authSubmit() {
+  if (!sb) { setAuthMsg('Still loading — please wait', 'error'); return; }
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  if (!email || !password) { setAuthMsg('Enter email and password', 'error'); return; }
+  const btn = document.getElementById('authBtn');
+  btn.disabled = true; btn.textContent = 'Please wait…';
+
+  try {
+    if (authMode === 'signup') {
+      const { error } = await sb.auth.signUp({ email, password });
+      if (error) throw error;
+      setAuthMsg('Check your email for a confirmation link!', 'success');
+      document.getElementById('authPassword').value = '';
+    } else {
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      // onAuthStateChange will handle the transition
+    }
+  } catch(e) {
+    setAuthMsg(e.message || 'Authentication failed', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = authMode==='signin' ? 'SIGN IN' : 'CREATE ACCOUNT';
+  }
+}
+
+async function sendReset() {
+  if (!sb) { setAuthMsg('Still loading — please wait', 'error'); return; }
+  const email = document.getElementById('authEmail').value.trim();
+  if (!email) { setAuthMsg('Enter your email first', 'error'); return; }
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin
+  });
+  if (error) setAuthMsg(error.message, 'error');
+  else setAuthMsg('Reset link sent — check your email', 'success');
+}
+
+async function signOut() {
+  await sb.auth.signOut();
+  currentUser = null;
+  document.getElementById('userEmail').textContent = '';
+  document.getElementById('homeView').classList.remove('active');
+  document.getElementById('galleryView').classList.remove('active');
+  document.getElementById('authScreen').style.display = 'flex';
+  document.getElementById('authEmail').value = '';
+  document.getElementById('authPassword').value = '';
+  setAuthMsg('', '');
+}
+
+function showApp(user) {
+  currentUser = user;
+  document.getElementById('userEmail').textContent = user.email;
+  document.getElementById('authScreen').style.display = 'none';
+  loadModels();
+}
+
+// Auth listener is registered inside initSupabase() above
+
 // ── INIT ─────────────────────────────────────────────────────
 document.getElementById('footerDate').textContent = new Date().toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'long',year:'numeric'}).toUpperCase();
-loadModels();
+initSupabase(); // fetches /api/config, then sets up auth listener
 </script>
 </body>
 </html>
