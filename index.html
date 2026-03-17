@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MODEL ARCHIVE</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=IBM+Plex+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#070a12;--glass:rgba(255,255,255,0.04);--glass-border:rgba(255,255,255,0.08);
+  --glass-hover:rgba(255,255,255,0.07);--accent:#c8a96e;--text-primary:rgba(255,255,255,0.92);
+  --text-secondary:rgba(255,255,255,0.45);--text-dim:rgba(255,255,255,0.25);
+  --danger:#e05c6a;--radius:16px;--radius-sm:8px;
+}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text-primary);font-family:'DM Sans',sans-serif;font-weight:300;min-height:100vh;overflow-x:hidden;}
+.ambient{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.orb{position:absolute;border-radius:50%;filter:blur(120px);opacity:0.15;}
+.orb-1{width:700px;height:700px;background:#1a3a5c;top:-200px;left:-200px;}
+.orb-2{width:500px;height:500px;background:#3a2a1a;top:30%;right:-100px;}
+.orb-3{width:600px;height:600px;background:#1a2a3a;bottom:-200px;left:30%;}
+body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");opacity:0.4;}
+body::before{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);}
+
+/* LOADING SCREEN */
+#loadingScreen{position:fixed;inset:0;z-index:500;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;}
+.loading-logo{font-family:'Bebas Neue',sans-serif;font-size:64px;letter-spacing:0.05em;background:linear-gradient(135deg,#fff 0%,rgba(255,255,255,0.4) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.loading-bar-wrap{width:200px;height:2px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;}
+.loading-bar{height:100%;width:0%;background:var(--accent);transition:width 0.3s;}
+.loading-label{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:0.2em;text-transform:uppercase;}
+
+/* VIEWS */
+.view{display:none;position:relative;z-index:2;}
+.view.active{display:block;}
+
+/* HOME */
+.page{max-width:1400px;margin:0 auto;padding:0 2rem 4rem;}
+header{padding:3rem 0 2rem;display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--glass-border);margin-bottom:2rem;}
+.site-label{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:300;color:var(--accent);letter-spacing:0.3em;text-transform:uppercase;margin-bottom:0.5rem;}
+h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(60px,9vw,120px);line-height:0.9;letter-spacing:0.02em;background:linear-gradient(135deg,#fff 0%,rgba(255,255,255,0.6) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.header-right{text-align:right;padding-bottom:0.5rem;}
+.count-display{font-family:'IBM Plex Mono',monospace;font-size:48px;font-weight:300;color:var(--text-dim);line-height:1;}
+.count-display span{color:var(--accent);}
+.count-label{font-size:11px;color:var(--text-secondary);letter-spacing:0.15em;text-transform:uppercase;}
+.controls{display:flex;gap:12px;margin-bottom:2rem;flex-wrap:wrap;align-items:center;}
+.search-wrap{position:relative;flex:1;min-width:200px;}
+.search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:14px;height:14px;opacity:0.35;}
+.search-input{width:100%;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius-sm);padding:10px 14px 10px 38px;color:var(--text-primary);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:300;outline:none;backdrop-filter:blur(20px);transition:border-color 0.2s,background 0.2s;}
+.search-input::placeholder{color:var(--text-dim);}
+.search-input:focus{border-color:rgba(200,169,110,0.35);background:rgba(255,255,255,0.06);}
+.sort-group{display:flex;gap:6px;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius-sm);padding:4px;backdrop-filter:blur(20px);}
+.sort-btn{background:transparent;border:none;color:var(--text-secondary);font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:300;letter-spacing:0.08em;padding:6px 12px;border-radius:4px;cursor:pointer;transition:all 0.18s;white-space:nowrap;display:flex;align-items:center;gap:5px;}
+.sort-btn:hover{color:var(--text-primary);background:rgba(255,255,255,0.05);}
+.sort-btn.active{background:rgba(200,169,110,0.15);color:var(--accent);}
+.sort-dir{font-size:9px;opacity:0.7;}
+.btn-add{background:rgba(200,169,110,0.1);border:1px solid rgba(200,169,110,0.3);color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:300;letter-spacing:0.12em;text-transform:uppercase;padding:10px 18px;border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s;white-space:nowrap;backdrop-filter:blur(20px);}
+.btn-add:hover{background:rgba(200,169,110,0.18);border-color:rgba(200,169,110,0.5);}
+.results-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;}
+.results-count{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-secondary);letter-spacing:0.08em;}
+.results-count em{color:var(--accent);font-style:normal;}
+.grid{columns:4 280px;column-gap:1.1rem;}
+.card{break-inside:avoid;margin-bottom:1.1rem;position:relative;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:transform 0.25s,border-color 0.25s,background 0.25s;backdrop-filter:blur(30px);animation:fadeSlideIn 0.4s both;display:block;}
+.card:hover{transform:translateY(-4px);border-color:rgba(200,169,110,0.25);background:var(--glass-hover);}
+.card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.03) 0%,transparent 60%);pointer-events:none;}
+@keyframes fadeSlideIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+.card-avatar{position:relative;overflow:hidden;background:#0d1018;min-height:180px;}
+.card-avatar img{width:100%;height:auto;display:block;transition:transform 0.4s;}
+.card:hover .card-avatar img{transform:scale(1.04);}
+.card-avatar-placeholder{width:100%;min-height:180px;display:flex;align-items:center;justify-content:center;}
+.avatar-initials{font-family:'Bebas Neue',sans-serif;font-size:72px;color:rgba(255,255,255,0.06);letter-spacing:0.05em;}
+.pic-badge{position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,0.6);border:1px solid var(--glass-border);border-radius:6px;padding:3px 8px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:300;color:var(--text-secondary);backdrop-filter:blur(10px);}
+.pic-badge span{color:var(--accent);}
+.card-body{padding:1.1rem 1.25rem 1.25rem;}
+.card-name{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:0.03em;line-height:1.1;margin-bottom:0.3rem;}
+.card-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:0.75rem;}
+.tag{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:300;letter-spacing:0.1em;text-transform:uppercase;padding:3px 8px;border-radius:4px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:var(--text-secondary);}
+.tag.accent{background:rgba(200,169,110,0.1);border-color:rgba(200,169,110,0.25);color:var(--accent);}
+.card-meta{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--glass-border);padding-top:0.75rem;margin-top:0.5rem;}
+.card-date{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:300;color:var(--text-dim);}
+.card-actions{display:flex;gap:6px;}
+.icon-btn{background:transparent;border:1px solid transparent;border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.18s;color:var(--text-dim);}
+.icon-btn:hover{border-color:var(--glass-border);color:var(--text-secondary);background:rgba(255,255,255,0.04);}
+.icon-btn.del:hover{border-color:rgba(224,92,106,0.3);color:var(--danger);}
+.empty-state{column-span:all;text-align:center;padding:5rem 2rem;}
+.empty-icon{font-size:48px;margin-bottom:1rem;opacity:0.2;}
+.empty-title{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:0.05em;color:var(--text-dim);margin-bottom:0.5rem;}
+.empty-sub{font-size:13px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;font-weight:300;}
+
+/* GALLERY VIEW */
+#galleryView{min-height:100vh;}
+.gallery-page{max-width:1400px;margin:0 auto;padding:0 2rem 4rem;}
+.gallery-topbar{padding:2rem 0 1.5rem;display:flex;align-items:center;gap:1.25rem;border-bottom:1px solid var(--glass-border);margin-bottom:2rem;flex-wrap:wrap;}
+.back-btn{display:flex;align-items:center;gap:8px;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius-sm);padding:8px 14px;color:var(--text-secondary);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;transition:all 0.18s;backdrop-filter:blur(20px);white-space:nowrap;flex-shrink:0;}
+.back-btn:hover{border-color:rgba(200,169,110,0.3);color:var(--accent);}
+.back-btn svg{width:12px;height:12px;}
+.gallery-model-info{flex:1;display:flex;align-items:center;gap:1rem;overflow:hidden;min-width:0;}
+.gallery-thumb-img{width:50px;height:50px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid var(--glass-border);}
+.gallery-thumb-placeholder{width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:18px;color:rgba(255,255,255,0.15);flex-shrink:0;}
+.gallery-model-name-big{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:0.03em;line-height:1;}
+.gallery-model-loc-small{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:0.1em;margin-top:2px;}
+.gallery-topbar-btns{display:flex;gap:8px;flex-shrink:0;}
+.btn-add-photo{background:rgba(200,169,110,0.1);border:1px solid rgba(200,169,110,0.3);color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:300;letter-spacing:0.12em;text-transform:uppercase;padding:9px 14px;border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+.btn-add-photo:hover{background:rgba(200,169,110,0.18);}
+.btn-edit-profile{background:var(--glass);border:1px solid var(--glass-border);color:var(--text-secondary);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;padding:9px 14px;border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+.btn-edit-profile:hover{border-color:rgba(255,255,255,0.15);color:var(--text-primary);}
+.gallery-bio-strip{display:flex;gap:2rem;align-items:center;margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--glass-border);}
+.gallery-tags{display:flex;flex-wrap:wrap;gap:6px;flex:1;}
+.gallery-stat{text-align:right;flex-shrink:0;}
+.gallery-stat-num{font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:300;color:var(--accent);line-height:1;}
+.gallery-stat-label{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:0.15em;text-transform:uppercase;margin-top:2px;}
+.gallery-sort-bar{display:flex;align-items:center;gap:8px;margin-bottom:1.5rem;flex-wrap:wrap;}
+.gallery-sort-label{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:0.15em;text-transform:uppercase;margin-right:4px;}
+.gsort-btn{background:var(--glass);border:1px solid var(--glass-border);border-radius:6px;padding:6px 14px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:300;letter-spacing:0.08em;color:var(--text-secondary);cursor:pointer;transition:all 0.18s;white-space:nowrap;}
+.gsort-btn:hover{color:var(--text-primary);border-color:rgba(255,255,255,0.15);}
+.gsort-btn.active{background:rgba(200,169,110,0.12);border-color:rgba(200,169,110,0.35);color:var(--accent);}
+
+/* MASONRY */
+.masonry{columns:4 220px;column-gap:10px;}
+.masonry-item{break-inside:avoid;margin-bottom:10px;position:relative;border-radius:10px;overflow:hidden;cursor:pointer;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);animation:fadeSlideIn 0.4s both;display:block;}
+.masonry-item img{width:100%;display:block;transition:transform 0.35s;}
+.masonry-item:hover img{transform:scale(1.04);}
+.masonry-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.6) 0%,transparent 40%);opacity:0;transition:opacity 0.22s;display:flex;align-items:flex-end;justify-content:flex-end;padding:10px;}
+.masonry-item:hover .masonry-overlay{opacity:1;}
+.masonry-del{background:rgba(0,0,0,0.55);border:1px solid rgba(224,92,106,0.4);border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--danger);transition:background 0.18s;}
+.masonry-del:hover{background:rgba(224,92,106,0.2);}
+.gallery-empty{text-align:center;padding:5rem 2rem;}
+
+/* LIGHTBOX */
+.lightbox{position:fixed;inset:0;z-index:200;background:rgba(3,5,10,0.93);backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:center;padding:2rem;opacity:0;pointer-events:none;transition:opacity 0.2s;}
+.lightbox.open{opacity:1;pointer-events:all;}
+.lightbox-inner{position:relative;max-width:90vw;max-height:88vh;display:flex;align-items:center;justify-content:center;}
+.lightbox-inner img{max-width:90vw;max-height:85vh;border-radius:10px;display:block;}
+.lb-close{position:absolute;top:-44px;right:0;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-secondary);font-size:14px;transition:all 0.18s;}
+.lb-close:hover{color:var(--text-primary);}
+.lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);border-radius:8px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-secondary);transition:all 0.18s;font-size:18px;}
+.lb-nav:hover{color:var(--text-primary);background:rgba(0,0,0,0.7);}
+.lb-prev{left:-54px;}.lb-next{right:-54px;}
+.lb-counter{position:absolute;bottom:-36px;left:50%;transform:translateX(-50%);font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:0.15em;white-space:nowrap;}
+
+/* MODALS */
+.modal-overlay{position:fixed;inset:0;z-index:100;background:rgba(4,6,12,0.85);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;padding:2rem;opacity:0;pointer-events:none;transition:opacity 0.25s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{background:rgba(12,16,26,0.96);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:2rem;width:100%;max-width:520px;box-shadow:0 40px 80px rgba(0,0,0,0.6);transform:translateY(20px);transition:transform 0.25s;}
+.modal-overlay.open .modal{transform:translateY(0);}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:0.04em;}
+.modal-close{background:transparent;border:1px solid var(--glass-border);border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-secondary);font-size:14px;transition:all 0.18s;}
+.modal-close:hover{border-color:rgba(255,255,255,0.2);color:var(--text-primary);}
+.form-row{margin-bottom:1rem;}
+.form-row label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:300;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:6px;}
+.form-input,.form-textarea{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-sm);padding:10px 14px;color:var(--text-primary);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:300;outline:none;transition:border-color 0.2s;resize:none;}
+.form-input::placeholder,.form-textarea::placeholder{color:var(--text-dim);}
+.form-input:focus,.form-textarea:focus{border-color:rgba(200,169,110,0.35);}
+.form-textarea{min-height:80px;}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem;}
+.tags-input-wrap{display:flex;flex-wrap:wrap;gap:6px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-sm);padding:8px;min-height:44px;transition:border-color 0.2s;cursor:text;}
+.tags-input-wrap:focus-within{border-color:rgba(200,169,110,0.35);}
+.tag-pill{display:flex;align-items:center;gap:4px;background:rgba(200,169,110,0.12);border:1px solid rgba(200,169,110,0.25);border-radius:4px;padding:2px 8px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--accent);white-space:nowrap;}
+.tag-pill button{background:none;border:none;cursor:pointer;color:var(--accent);opacity:0.6;font-size:11px;padding:0;}
+.tag-pill button:hover{opacity:1;}
+#tagInput{background:none;border:none;outline:none;color:var(--text-primary);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:300;min-width:80px;flex:1;}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:1.5rem;}
+.btn-cancel{background:transparent;border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-sm);padding:9px 20px;color:var(--text-secondary);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all 0.18s;}
+.btn-cancel:hover{border-color:rgba(255,255,255,0.15);color:var(--text-primary);}
+.btn-save{background:rgba(200,169,110,0.12);border:1px solid rgba(200,169,110,0.35);border-radius:var(--radius-sm);padding:9px 24px;color:var(--accent);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all 0.2s;}
+.btn-save:hover{background:rgba(200,169,110,0.2);}
+.confirm-modal{max-width:380px;text-align:center;}
+.confirm-icon{font-size:40px;margin-bottom:1rem;opacity:0.6;}
+.confirm-title{font-family:'Bebas Neue',sans-serif;font-size:26px;margin-bottom:0.5rem;}
+.confirm-sub{font-size:13px;color:var(--text-secondary);margin-bottom:1.5rem;line-height:1.6;}
+.btn-delete{background:rgba(224,92,106,0.1);border:1px solid rgba(224,92,106,0.3);border-radius:var(--radius-sm);padding:9px 24px;color:var(--danger);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all 0.2s;}
+.btn-delete:hover{background:rgba(224,92,106,0.18);}
+/* Drop zone */
+.drop-zone{border:1.5px dashed rgba(200,169,110,0.3);border-radius:var(--radius-sm);padding:2.2rem 1rem;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;background:rgba(200,169,110,0.03);}
+.drop-zone:hover,.drop-zone.dragover{border-color:rgba(200,169,110,0.65);background:rgba(200,169,110,0.07);}
+.drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.dz-icon{font-size:28px;opacity:0.25;margin-bottom:0.6rem;}
+.dz-title{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px;}
+.dz-sub{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:0.06em;}
+.preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:6px;margin-top:0.75rem;max-height:220px;overflow-y:auto;}
+.preview-thumb{position:relative;border-radius:6px;overflow:hidden;aspect-ratio:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);}
+.preview-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.preview-remove{position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.7);border:none;border-radius:4px;width:18px;height:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--danger);font-size:9px;opacity:0;transition:opacity 0.15s;}
+.preview-thumb:hover .preview-remove{opacity:1;}
+.upload-progress{margin-top:0.5rem;height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;display:none;}
+.upload-progress-bar{height:100%;background:var(--accent);width:0%;transition:width 0.2s;}
+.upload-status{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-secondary);margin-top:6px;letter-spacing:0.08em;min-height:16px;}
+/* Cover photo upload */
+.cover-upload-wrap{position:relative;}
+.cover-upload-btn{position:absolute;right:0;top:0;height:100%;padding:0 12px;background:rgba(200,169,110,0.1);border:1px solid rgba(200,169,110,0.25);border-radius:0 var(--radius-sm) var(--radius-sm) 0;color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+.cover-upload-btn:hover{background:rgba(200,169,110,0.18);}
+.cover-upload-input{position:absolute;right:0;top:0;height:100%;width:100px;opacity:0;cursor:pointer;}
+footer{position:relative;z-index:2;border-top:1px solid var(--glass-border);padding:1.5rem 2rem;display:flex;justify-content:space-between;align-items:center;max-width:1400px;margin:0 auto;}
+.footer-text{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:0.12em;}
+</style>
+</head>
+<body>
+
+<div id="loadingScreen">
+  <div class="loading-logo">MODEL ARCHIVE</div>
+  <div class="loading-bar-wrap"><div class="loading-bar" id="loadingBar"></div></div>
+  <div class="loading-label" id="loadingLabel">Connecting to Cloudinary…</div>
+</div>
+
+<div class="ambient">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<!-- HOME VIEW -->
+<div id="homeView" class="view">
+  <div class="page">
+    <header>
+      <div class="header-left">
+        <div class="site-label">// PORTFOLIO ARCHIVE</div>
+        <h1>MODEL<br>GALLERY</h1>
+      </div>
+      <div class="header-right">
+        <div class="count-display"><span id="totalCount">0</span></div>
+        <div class="count-label">PROFILES INDEXED</div>
+      </div>
+    </header>
+    <div class="controls">
+      <div class="search-wrap">
+        <svg class="search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+        <input class="search-input" id="searchInput" type="text" placeholder="Search by name, tag, location…">
+      </div>
+      <div class="sort-group">
+        <button class="sort-btn active" data-sort="name" onclick="setSort('name')">NAME <span class="sort-dir" id="dir-name">↑</span></button>
+        <button class="sort-btn" data-sort="pics" onclick="setSort('pics')">PHOTOS <span class="sort-dir" id="dir-pics">↓</span></button>
+        <button class="sort-btn" data-sort="modified" onclick="setSort('modified')">RECENT <span class="sort-dir" id="dir-modified">↓</span></button>
+      </div>
+      <button class="btn-add" onclick="openAddModal()">+ ADD MODEL</button>
+    </div>
+    <div class="results-meta"><div class="results-count" id="resultsCount">Showing <em>0</em> profiles</div></div>
+    <div class="grid" id="grid"></div>
+  </div>
+  <footer>
+    <div class="footer-text">MODEL ARCHIVE — CLOUDINARY STORAGE</div>
+    <div class="footer-text" id="footerDate"></div>
+  </footer>
+</div>
+
+<!-- GALLERY VIEW -->
+<div id="galleryView" class="view">
+  <div class="gallery-page">
+    <div class="gallery-topbar">
+      <button class="back-btn" onclick="goHome()">
+        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2L4 6l4 4"/></svg>
+        ALL MODELS
+      </button>
+      <div class="gallery-model-info">
+        <div id="galleryThumb"></div>
+        <div>
+          <div class="gallery-model-name-big" id="galleryName"></div>
+          <div class="gallery-model-loc-small" id="galleryLoc"></div>
+        </div>
+      </div>
+      <div class="gallery-topbar-btns">
+        <button class="btn-add-photo" onclick="openAddPhotoModal()">+ ADD PHOTOS</button>
+        <button class="btn-edit-profile" onclick="openEditModalFromGallery()">EDIT PROFILE</button>
+      </div>
+    </div>
+    <div class="gallery-bio-strip">
+      <div class="gallery-tags" id="galleryTags"></div>
+      <div class="gallery-stat">
+        <div class="gallery-stat-num" id="galleryPhotoCount">0</div>
+        <div class="gallery-stat-label">PHOTOS</div>
+      </div>
+    </div>
+    <div class="gallery-sort-bar">
+      <span class="gallery-sort-label">SORT</span>
+      <button class="gsort-btn active" id="gsort-newest" onclick="setGallerySort('newest')">NEWEST FIRST</button>
+      <button class="gsort-btn" id="gsort-oldest" onclick="setGallerySort('oldest')">OLDEST FIRST</button>
+      <button class="gsort-btn" id="gsort-shuffle" onclick="setGallerySort('shuffle')">SHUFFLE</button>
+    </div>
+    <div id="masonryWrap"></div>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox">
+  <div class="lightbox-inner">
+    <button class="lb-close" onclick="closeLightbox()">✕</button>
+    <button class="lb-nav lb-prev" onclick="lbNav(-1)">&#8249;</button>
+    <img id="lbImg" src="" alt="">
+    <button class="lb-nav lb-next" onclick="lbNav(1)">&#8250;</button>
+    <div class="lb-counter" id="lbCounter"></div>
+  </div>
+</div>
+
+<!-- Add/Edit Profile Modal -->
+<div class="modal-overlay" id="formModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="formModalTitle">ADD PROFILE</div>
+      <button class="modal-close" onclick="closeFormModal()">✕</button>
+    </div>
+    <div class="form-row">
+      <label>Full Name *</label>
+      <input class="form-input" id="fName" placeholder="e.g. Ava Montclair">
+    </div>
+    <div class="form-row-2">
+      <div><label>Location</label><input class="form-input" id="fLocation" placeholder="Paris, FR"></div>
+      <div><label>Agency / Label</label><input class="form-input" id="fAgency" placeholder="Elite NY"></div>
+    </div>
+    <div class="form-row">
+      <label>Bio / Notes</label>
+      <textarea class="form-textarea" id="fBio" placeholder="Short description…"></textarea>
+    </div>
+    <div class="form-row">
+      <label>Cover Photo</label>
+      <div class="cover-upload-wrap">
+        <input class="form-input" id="fPhoto" placeholder="URL or upload →" style="padding-right:110px">
+        <input type="file" accept="image/*" class="cover-upload-input" id="coverFileInput" onchange="uploadCoverPhoto(this.files[0])">
+        <button class="cover-upload-btn" onclick="document.getElementById('coverFileInput').click()">↑ UPLOAD</button>
+      </div>
+      <div class="upload-status" id="coverUploadStatus"></div>
+    </div>
+    <div class="form-row">
+      <label>Tags (Enter or comma to add)</label>
+      <div class="tags-input-wrap" id="tagsWrap" onclick="document.getElementById('tagInput').focus()">
+        <input id="tagInput" placeholder="editorial, commercial…">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeFormModal()">Cancel</button>
+      <button class="btn-save" id="saveProfileBtn" onclick="saveModel()">Save Profile</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Photos Modal -->
+<div class="modal-overlay" id="addPhotoModal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <div class="modal-title">ADD PHOTOS</div>
+      <button class="modal-close" onclick="closeAddPhotoModal()">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="fileInput" accept="image/*" multiple onchange="handleFiles(this.files)">
+        <div class="dz-icon">↓</div>
+        <div class="dz-title">Drop images here or click to browse</div>
+        <div class="dz-sub">JPG, PNG, WEBP — uploading directly to Cloudinary</div>
+      </div>
+      <div class="upload-progress" id="uploadProgress"><div class="upload-progress-bar" id="uploadBar"></div></div>
+      <div class="upload-status" id="uploadStatus"></div>
+    </div>
+    <div class="form-row" id="previewSection" style="display:none">
+      <label>Uploaded — <span id="queueCount">0</span> photos <button onclick="clearUploaded()" style="background:none;border:none;color:var(--danger);font-family:'IBM Plex Mono',monospace;font-size:9px;cursor:pointer;letter-spacing:0.08em;text-transform:uppercase;margin-left:4px">CLEAR</button></label>
+      <div class="preview-grid" id="previewGrid"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeAddPhotoModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal confirm-modal">
+    <div class="confirm-icon">⚠</div>
+    <div class="confirm-title" id="confirmTitle">CONFIRM</div>
+    <div class="confirm-sub" id="confirmText"></div>
+    <div class="modal-footer" style="justify-content:center">
+      <button class="btn-cancel" onclick="closeConfirmModal()">Cancel</button>
+      <button class="btn-delete" id="confirmBtn">Remove</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────────
+const CLOUD_NAME   = 'dvuscttoc';
+const UPLOAD_PRESET = 'modelz';          // unsigned preset
+const API_KEY      = 'AsJBljJWYPBKriJf43mbxQ5FS2E';
+const API_BASE     = '/api/cloudinary';  // serverless proxy
+const PROFILE_TAG  = 'modelz_profile';
+// ────────────────────────────────────────────────────────────
+
+let models = [];
+let editingId = null;
+let currentTags = [];
+let sortField = 'name';
+let sortDirs = { name:1, pics:-1, modified:-1 };
+let searchQuery = '';
+let activeModelId = null;
+let lbPhotos = [];
+let lbIdx = 0;
+let gallerySortOrder = 'newest';
+let uploadedThisSession = [];  // tracks URLs uploaded in current modal open
+
+// ── CLOUDINARY HELPERS ──────────────────────────────────────
+
+// Upload a single file to Cloudinary (unsigned, no secret needed)
+async function cloudinaryUpload(file, folder, extraTags=[]) {
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('upload_preset', UPLOAD_PRESET);
+  fd.append('folder', folder);
+  fd.append('tags', [...extraTags].join(','));
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+    method: 'POST', body: fd
+  });
+  if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+  return await res.json();
+}
+
+// Call our serverless proxy
+async function apiCall(action, method='GET', body=null) {
+  const url = `${API_BASE}?action=${action}`;
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+  return await res.json();
+}
+
+// Parse Cloudinary context string "key=val|key2=val2" → object
+function parseContext(ctx) {
+  if (!ctx || !ctx.custom) return {};
+  return Object.fromEntries(
+    ctx.custom.split('|').map(p => {
+      const i = p.indexOf('=');
+      return i > -1 ? [p.slice(0,i), p.slice(i+1)] : [p, ''];
+    })
+  );
+}
+
+// ── LOAD ALL MODELS FROM CLOUDINARY ─────────────────────────
+async function loadModels() {
+  setLoading('Fetching profiles…', 30);
+  try {
+    const data = await apiCall('list_models');
+    const resources = data.resources || [];
+    models = resources.map(r => {
+      const ctx = parseContext(r.context);
+      return {
+        id: r.public_id,           // Cloudinary public_id is our stable ID
+        folder: r.public_id.split('/').slice(0,-1).join('/'),
+        public_id: r.public_id,
+        name: ctx.name || r.public_id,
+        location: ctx.location || '',
+        agency: ctx.agency || '',
+        bio: ctx.bio || '',
+        tags: ctx.tags ? ctx.tags.split(',').filter(Boolean) : [],
+        photo: r.secure_url,
+        created: r.created_at ? new Date(r.created_at).getTime() : Date.now(),
+        modified: r.created_at ? new Date(r.created_at).getTime() : Date.now(),
+        gallery: []  // loaded lazily when gallery opens
+      };
+    });
+    setLoading('Ready', 100);
+    setTimeout(hideLoading, 400);
+    render();
+  } catch(e) {
+    setLoading('Failed to load — check env vars', 100);
+    console.error(e);
+    setTimeout(hideLoading, 1500);
+    models = [];
+    render();
+  }
+}
+
+// Load gallery photos for one model
+async function loadGalleryPhotos(folder) {
+  const data = await apiCall(`list_photos&folder=${encodeURIComponent(folder)}`);
+  const resources = (data.resources || [])
+    .filter(r => !r.tags || !r.tags.includes(PROFILE_TAG))  // exclude profile card
+    .sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+  return resources.map(r => ({ url: r.secure_url, public_id: r.public_id, created_at: r.created_at }));
+}
+
+// ── LOADING SCREEN ───────────────────────────────────────────
+function setLoading(msg, pct) {
+  document.getElementById('loadingLabel').textContent = msg;
+  document.getElementById('loadingBar').style.width = pct + '%';
+}
+function hideLoading() {
+  const s = document.getElementById('loadingScreen');
+  s.style.transition = 'opacity 0.4s';
+  s.style.opacity = '0';
+  setTimeout(() => s.remove(), 400);
+  document.getElementById('homeView').classList.add('active');
+}
+
+// ── HOME RENDER ──────────────────────────────────────────────
+function getFiltered() {
+  let list = [...models];
+  if (searchQuery.trim()) {
+    const q = searchQuery.toLowerCase();
+    list = list.filter(m =>
+      m.name.toLowerCase().includes(q) ||
+      (m.location||'').toLowerCase().includes(q) ||
+      (m.tags||[]).some(t => t.toLowerCase().includes(q)) ||
+      (m.bio||'').toLowerCase().includes(q)
+    );
+  }
+  const d = sortDirs[sortField];
+  list.sort((a,b) => {
+    if (sortField==='name') return d * a.name.localeCompare(b.name);
+    if (sortField==='pics') return d * ((a.gallery||[]).length - (b.gallery||[]).length);
+    if (sortField==='modified') return d * ((a.modified||0) - (b.modified||0));
+    return 0;
+  });
+  return list;
+}
+
+function setSort(f) {
+  if (sortField===f) sortDirs[f]*=-1; else sortField=f;
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.toggle('active', b.dataset.sort===f));
+  document.querySelectorAll('[id^="dir-"]').forEach(el => el.textContent = sortDirs[el.id.replace('dir-','')]===1?'↑':'↓');
+  render();
+}
+
+function fmt(ts) { if(!ts)return'—'; return new Date(ts).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); }
+function inits(n) { return n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
+
+function buildCard(m, i) {
+  const tags = (m.tags||[]).slice(0,3).map((t,ti) => `<span class="tag${ti===0?' accent':''}">${t}</span>`).join('');
+  const av = m.photo
+    ? `<img src="${m.photo}" alt="${m.name}" loading="lazy" onerror="this.style.display='none'">`
+    : `<div class="card-avatar-placeholder"><div class="avatar-initials">${inits(m.name)}</div></div>`;
+  const cnt = (m.gallery||[]).length;
+  return `<div class="card" style="animation-delay:${i*.04}s" onclick="openGallery('${CSS.escape(m.id)}')">
+    <div class="card-avatar">${av}<div class="pic-badge"><span>${cnt}</span> PHOTOS</div></div>
+    <div class="card-body">
+      <div class="card-name">${m.name}</div>
+      ${m.location?`<div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:0.1em;margin-bottom:0.5rem">${m.location}</div>`:''}
+      <div class="card-tags">${tags}</div>
+      <div class="card-meta">
+        <div class="card-date">${fmt(m.modified)}</div>
+        <div class="card-actions">
+          <button class="icon-btn" onclick="event.stopPropagation();openEditModal('${CSS.escape(m.id)}')" title="Edit">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M8.5 1.5l2 2L4 10H2V8L8.5 1.5z"/></svg>
+          </button>
+          <button class="icon-btn del" onclick="event.stopPropagation();askDeleteModel('${CSS.escape(m.id)}')" title="Delete">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2 3h8M5 3V2h2v1M4.5 9.5V5M7.5 9.5V5M3 3l.8 7.2a.8.8 0 00.8.8h2.8a.8.8 0 00.8-.8L9 3"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function render() {
+  const list = getFiltered();
+  document.getElementById('totalCount').textContent = models.length;
+  const g = document.getElementById('grid');
+  if (!list.length) {
+    const [msg,sub] = searchQuery ? ['No profiles match','Try a different name or tag'] : ['No profiles yet','Click + ADD MODEL to start'];
+    g.innerHTML = `<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-title">${msg}</div><div class="empty-sub">${sub}</div></div>`;
+  } else {
+    g.innerHTML = list.map((m,i) => buildCard(m,i)).join('');
+  }
+  document.getElementById('resultsCount').innerHTML = `Showing <em>${list.length}</em> of ${models.length} profiles`;
+}
+
+document.getElementById('searchInput').addEventListener('input', e => { searchQuery=e.target.value; render(); });
+
+// ── GALLERY ──────────────────────────────────────────────────
+async function openGallery(id) {
+  const m = models.find(x => x.id === id);
+  if (!m) return;
+  activeModelId = id;
+
+  const td = document.getElementById('galleryThumb');
+  td.innerHTML = m.photo
+    ? `<img class="gallery-thumb-img" src="${m.photo}" onerror="this.outerHTML='<div class=\\'gallery-thumb-placeholder\\'>${inits(m.name)}</div>'">`
+    : `<div class="gallery-thumb-placeholder">${inits(m.name)}</div>`;
+  document.getElementById('galleryName').textContent = m.name;
+  document.getElementById('galleryLoc').textContent = m.location || '';
+  const tags = (m.tags||[]).map(t=>`<span class="tag">${t}</span>`).join('');
+  document.getElementById('galleryTags').innerHTML = tags || `<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim)">No tags</span>`;
+
+  document.getElementById('homeView').classList.remove('active');
+  document.getElementById('galleryView').classList.add('active');
+  window.scrollTo(0,0);
+
+  // Load photos lazily
+  document.getElementById('masonryWrap').innerHTML = `<div style="text-align:center;padding:4rem;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);letter-spacing:0.1em">LOADING GALLERY…</div>`;
+  document.getElementById('galleryPhotoCount').textContent = '…';
+
+  try {
+    const photos = await loadGalleryPhotos(m.folder || `models/${m.name.toLowerCase().replace(/\s+/g,'-')}`);
+    const idx = models.findIndex(x => x.id === id);
+    if (idx !== -1) models[idx].gallery = photos;
+    renderMasonry(models[idx]);
+  } catch(e) {
+    document.getElementById('masonryWrap').innerHTML = `<div class="gallery-empty"><div class="empty-title" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--text-dim)">Failed to load photos</div></div>`;
+  }
+}
+
+function goHome() {
+  document.getElementById('galleryView').classList.remove('active');
+  document.getElementById('homeView').classList.add('active');
+  activeModelId = null;
+}
+
+function renderMasonry(m) {
+  const wrap = document.getElementById('masonryWrap');
+  let photos = [...(m.gallery||[])];
+  document.getElementById('galleryPhotoCount').textContent = photos.length;
+
+  if (!photos.length) {
+    wrap.innerHTML = `<div class="gallery-empty"><div class="empty-icon" style="opacity:0.15;font-size:48px">◈</div><div class="empty-title" style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:0.05em;color:var(--text-dim)">No photos yet</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);margin-top:0.5rem;letter-spacing:0.08em">Click + ADD PHOTOS to start this model's gallery</div></div>`;
+    return;
+  }
+
+  if (gallerySortOrder==='oldest') photos = photos.slice().reverse();
+  else if (gallerySortOrder==='shuffle') { for(let i=photos.length-1;i>0;i--){const j=0|Math.random()*(i+1);[photos[i],photos[j]]=[photos[j],photos[i]];} }
+
+  const items = photos.map((p, idx) => {
+    const origIdx = (m.gallery||[]).findIndex(x => x.public_id === p.public_id);
+    return `<div class="masonry-item" style="animation-delay:${idx*.025}s">
+      <img src="${p.url}" alt="" loading="lazy" onclick="openLbSorted(${idx})" onerror="this.closest('.masonry-item').style.display='none'">
+      <div class="masonry-overlay">
+        <button class="masonry-del" onclick="event.stopPropagation();askDeletePhoto('${p.public_id}')">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 3h8M5 3V2h2v1M4.5 9.5V5M7.5 9.5V5M3 3l.8 7.2a.8.8 0 00.8.8h2.8a.8.8 0 00.8-.8L9 3"/></svg>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+  wrap.innerHTML = `<div class="masonry">${items}</div>`;
+  window._currentSortedPhotos = photos;
+}
+
+function setGallerySort(order) {
+  gallerySortOrder = order;
+  document.querySelectorAll('.gsort-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('gsort-'+order).classList.add('active');
+  const m = models.find(x => x.id===activeModelId);
+  if (m) renderMasonry(m);
+}
+
+// ── LIGHTBOX ─────────────────────────────────────────────────
+function openLbSorted(idx) {
+  const photos = window._currentSortedPhotos || [];
+  if (!photos.length) return;
+  lbPhotos = photos.map(p => p.url);
+  lbIdx = idx;
+  updateLb();
+  document.getElementById('lightbox').classList.add('open');
+}
+function updateLb() {
+  document.getElementById('lbImg').src = lbPhotos[lbIdx];
+  document.getElementById('lbCounter').textContent = `${lbIdx+1} / ${lbPhotos.length}`;
+}
+function lbNav(d) { lbIdx=(lbIdx+d+lbPhotos.length)%lbPhotos.length; updateLb(); }
+function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
+document.getElementById('lightbox').addEventListener('click', e => { if(e.target===document.getElementById('lightbox'))closeLightbox(); });
+
+// ── UPLOAD PHOTOS TO CLOUDINARY ──────────────────────────────
+function openAddPhotoModal() {
+  uploadedThisSession = [];
+  renderPreviewGrid();
+  document.getElementById('uploadStatus').textContent = '';
+  document.getElementById('uploadProgress').style.display = 'none';
+  document.getElementById('addPhotoModal').classList.add('open');
+}
+function closeAddPhotoModal() {
+  document.getElementById('addPhotoModal').classList.remove('open');
+  // Refresh gallery to show newly uploaded photos
+  const m = models.find(x => x.id===activeModelId);
+  if (m && uploadedThisSession.length) {
+    models[models.findIndex(x=>x.id===activeModelId)].gallery = [
+      ...uploadedThisSession.map(u=>({url:u.url,public_id:u.public_id,created_at:new Date().toISOString()})),
+      ...(m.gallery||[])
+    ];
+    renderMasonry(models.find(x=>x.id===activeModelId));
+  }
+}
+
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
+
+async function handleFiles(files) {
+  const arr = Array.from(files).filter(f => f.type.startsWith('image/'));
+  if (!arr.length) return;
+
+  const m = models.find(x => x.id===activeModelId);
+  if (!m) { showToast('No active model','error'); return; }
+  const folder = m.folder || `models/${m.name.toLowerCase().replace(/\s+/g,'-')}`;
+
+  const prog = document.getElementById('uploadProgress');
+  const bar = document.getElementById('uploadBar');
+  const status = document.getElementById('uploadStatus');
+  prog.style.display = 'block'; bar.style.width = '0%';
+
+  let done = 0;
+  const total = arr.length;
+  status.textContent = `Uploading 0 / ${total}…`;
+
+  for (const file of arr) {
+    try {
+      status.textContent = `Uploading ${done+1} / ${total} — ${file.name}`;
+      const result = await cloudinaryUpload(file, folder);
+      uploadedThisSession.push({ url: result.secure_url, public_id: result.public_id });
+      done++;
+      bar.style.width = Math.round(done/total*100) + '%';
+      renderPreviewGrid();
+    } catch(e) {
+      showToast(`Failed: ${file.name}`, 'error');
+    }
+  }
+  status.textContent = `✓ ${done} of ${total} uploaded to Cloudinary`;
+  setTimeout(() => { prog.style.display='none'; bar.style.width='0%'; }, 800);
+  document.getElementById('queueCount').textContent = uploadedThisSession.length;
+}
+
+function renderPreviewGrid() {
+  const sec = document.getElementById('previewSection');
+  const grid = document.getElementById('previewGrid');
+  document.getElementById('queueCount').textContent = uploadedThisSession.length;
+  if (!uploadedThisSession.length) { sec.style.display='none'; return; }
+  sec.style.display = 'block';
+  grid.innerHTML = uploadedThisSession.map((u,i) => `
+    <div class="preview-thumb">
+      <img src="${u.url}" alt="">
+      <button class="preview-remove" onclick="uploadedThisSession.splice(${i},1);renderPreviewGrid()">✕</button>
+    </div>`).join('');
+}
+
+function clearUploaded() { uploadedThisSession=[]; renderPreviewGrid(); }
+
+// ── COVER PHOTO UPLOAD ────────────────────────────────────────
+async function uploadCoverPhoto(file) {
+  if (!file) return;
+  const status = document.getElementById('coverUploadStatus');
+  const btn = document.getElementById('saveProfileBtn');
+  status.textContent = 'Uploading cover photo…';
+  btn.disabled = true; btn.style.opacity = '0.5';
+  try {
+    const folder = editingId
+      ? (models.find(x=>x.id===editingId)?.folder || 'models/covers')
+      : 'models/covers';
+    const result = await cloudinaryUpload(file, folder);
+    document.getElementById('fPhoto').value = result.secure_url;
+    status.textContent = '✓ Cover photo uploaded';
+  } catch(e) {
+    status.textContent = '✗ Upload failed — try URL instead';
+  } finally {
+    btn.disabled = false; btn.style.opacity = '1';
+  }
+}
+
+// ── ADD / EDIT PROFILE (saves metadata to Cloudinary) ────────
+function openAddModal() {
+  editingId = null; currentTags = [];
+  document.getElementById('formModalTitle').textContent = 'ADD PROFILE';
+  ['fName','fLocation','fAgency','fPhoto','fBio'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('coverUploadStatus').textContent = '';
+  renderTags();
+  document.getElementById('formModal').classList.add('open');
+}
+
+function openEditModal(id) {
+  const m = models.find(x => x.id===id); if (!m) return;
+  editingId = id; currentTags = [...(m.tags||[])];
+  document.getElementById('formModalTitle').textContent = 'EDIT PROFILE';
+  document.getElementById('fName').value = m.name;
+  document.getElementById('fLocation').value = m.location||'';
+  document.getElementById('fAgency').value = m.agency||'';
+  document.getElementById('fPhoto').value = m.photo||'';
+  document.getElementById('fBio').value = m.bio||'';
+  document.getElementById('coverUploadStatus').textContent = '';
+  renderTags();
+  document.getElementById('formModal').classList.add('open');
+}
+
+function openEditModalFromGallery() { if (activeModelId) openEditModal(activeModelId); }
+function closeFormModal() { document.getElementById('formModal').classList.remove('open'); }
+
+async function saveModel() {
+  const name = document.getElementById('fName').value.trim();
+  if (!name) { document.getElementById('fName').focus(); return; }
+
+  const btn = document.getElementById('saveProfileBtn');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+
+  const location = document.getElementById('fLocation').value.trim();
+  const agency = document.getElementById('fAgency').value.trim();
+  const bio = document.getElementById('fBio').value.trim();
+  const photo = document.getElementById('fPhoto').value.trim();
+  const tags = [...currentTags];
+  const now = Date.now();
+
+  try {
+    if (editingId) {
+      // Update metadata on existing Cloudinary asset
+      const m = models.find(x => x.id===editingId);
+      await apiCall('update_context', 'POST', {
+        public_id: m.public_id,
+        context: { name, location, agency, bio, tags: tags.join(',') }
+      });
+      const idx = models.findIndex(x=>x.id===editingId);
+      models[idx] = { ...models[idx], name, location, agency, bio, tags, photo: photo||models[idx].photo, modified: now };
+      if (activeModelId===editingId) {
+        document.getElementById('galleryName').textContent = name;
+        document.getElementById('galleryLoc').textContent = location;
+        const tagHtml = tags.map(t=>`<span class="tag">${t}</span>`).join('');
+        document.getElementById('galleryTags').innerHTML = tagHtml || `<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim)">No tags</span>`;
+      }
+      showToast('Profile updated','success');
+    } else {
+      // Create new profile — upload cover photo as the profile asset
+      if (!photo) { showToast('Add a cover photo first','error'); btn.textContent='Save Profile'; btn.disabled=false; return; }
+      const folder = `models/${name.toLowerCase().replace(/[^a-z0-9]+/g,'-')}`;
+      // Upload the cover image with profile tag and context
+      let uploadResult;
+      if (photo.startsWith('data:') || photo.startsWith('blob:') || !photo.startsWith('http')) {
+        showToast('Please use a URL or upload button for cover photo','error');
+        btn.textContent='Save Profile'; btn.disabled=false; return;
+      }
+      // Upload-by-URL to Cloudinary
+      const fd = new FormData();
+      fd.append('file', photo);
+      fd.append('upload_preset', UPLOAD_PRESET);
+      fd.append('folder', folder);
+      fd.append('tags', PROFILE_TAG);
+      fd.append('context', `name=${name}|location=${location}|agency=${agency}|bio=${bio.replace(/[|=]/g,'')}|tags=${tags.join(',')}`);
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method:'POST', body:fd });
+      if (!res.ok) throw new Error('Failed to create profile');
+      uploadResult = await res.json();
+
+      const newModel = {
+        id: uploadResult.public_id,
+        folder,
+        public_id: uploadResult.public_id,
+        name, location, agency, bio, tags,
+        photo: uploadResult.secure_url,
+        created: now, modified: now, gallery: []
+      };
+      models.push(newModel);
+      showToast('Profile created','success');
+    }
+    closeFormModal();
+    render();
+  } catch(e) {
+    showToast('Save failed — check connection','error');
+    console.error(e);
+  } finally {
+    btn.textContent = 'Save Profile'; btn.disabled = false;
+  }
+}
+
+// ── DELETE ───────────────────────────────────────────────────
+function showConfirm(title, text, cb) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmText').textContent = text;
+  document.getElementById('confirmBtn').onclick = () => { cb(); closeConfirmModal(); };
+  document.getElementById('confirmModal').classList.add('open');
+}
+function closeConfirmModal() { document.getElementById('confirmModal').classList.remove('open'); }
+
+function askDeleteModel(id) {
+  const m = models.find(x=>x.id===id);
+  showConfirm('REMOVE PROFILE', `Delete "${m?.name}" and all their photos from Cloudinary? This cannot be undone.`, async () => {
+    try {
+      await apiCall('delete_folder','POST',{ folder: m.folder });
+      models = models.filter(x=>x.id!==id);
+      render();
+      showToast('Profile deleted','success');
+    } catch(e) { showToast('Delete failed','error'); }
+  });
+}
+
+function askDeletePhoto(public_id) {
+  showConfirm('REMOVE PHOTO', 'Delete this photo from Cloudinary? Cannot be undone.', async () => {
+    try {
+      await apiCall('delete_asset','POST',{ public_id });
+      const idx = models.findIndex(x=>x.id===activeModelId);
+      if (idx!==-1) {
+        models[idx].gallery = models[idx].gallery.filter(p=>p.public_id!==public_id);
+        renderMasonry(models[idx]);
+      }
+      showToast('Photo deleted','success');
+    } catch(e) { showToast('Delete failed','error'); }
+  });
+}
+
+// ── TAGS ─────────────────────────────────────────────────────
+const tagInput = document.getElementById('tagInput');
+tagInput.addEventListener('keydown', e => {
+  if (e.key==='Enter'||e.key===',') { e.preventDefault(); const v=tagInput.value.trim().replace(/,$/,''); if(v&&!currentTags.includes(v)){currentTags.push(v);renderTags();} tagInput.value=''; }
+  else if (e.key==='Backspace'&&!tagInput.value&&currentTags.length) { currentTags.pop(); renderTags(); }
+});
+function renderTags() {
+  document.getElementById('tagsWrap').querySelectorAll('.tag-pill').forEach(p=>p.remove());
+  currentTags.forEach((t,i) => {
+    const p = document.createElement('div'); p.className='tag-pill';
+    p.innerHTML = `${t}<button onclick="currentTags.splice(${i},1);renderTags()" type="button">✕</button>`;
+    document.getElementById('tagsWrap').insertBefore(p, tagInput);
+  });
+}
+
+// ── TOAST ────────────────────────────────────────────────────
+function showToast(msg, type) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  const isErr = type==='error';
+  t.style.cssText = 'position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);z-index:999;padding:10px 20px;border-radius:8px;font-family:IBM Plex Mono,monospace;font-size:11px;letter-spacing:0.1em;white-space:nowrap;pointer-events:none;backdrop-filter:blur(12px);border:1px solid;transition:opacity 0.4s;' + (isErr ? 'background:rgba(224,92,106,0.15);border-color:rgba(224,92,106,0.4);color:#e05c6a' : 'background:rgba(200,169,110,0.12);border-color:rgba(200,169,110,0.35);color:#c8a96e');
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; setTimeout(()=>t.remove(),400); }, 2500);
+}
+
+// ── KEYBOARD / BACKDROP ──────────────────────────────────────
+document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); }));
+document.addEventListener('keydown', e => {
+  if (document.getElementById('lightbox').classList.contains('open')) {
+    if (e.key==='Escape') closeLightbox();
+    if (e.key==='ArrowLeft') lbNav(-1);
+    if (e.key==='ArrowRight') lbNav(1);
+    return;
+  }
+  if (e.key==='Escape') document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open'));
+});
+
+// ── INIT ─────────────────────────────────────────────────────
+document.getElementById('footerDate').textContent = new Date().toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'long',year:'numeric'}).toUpperCase();
+loadModels();
+</script>
+</body>
+</html>
