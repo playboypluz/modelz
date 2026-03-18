@@ -209,7 +209,7 @@ h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(60px,9vw,120px);line-heig
 .cover-upload-input{position:absolute;right:0;top:0;height:100%;width:100px;opacity:0;cursor:pointer;}
 
 /* AUTH SCREEN */
-#authScreen{position:fixed;inset:0;z-index:400;background:var(--bg);display:none;align-items:center;justify-content:center;padding:2rem;}
+#authScreen{position:fixed;inset:0;z-index:400;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:2rem;}
 .auth-box{width:100%;max-width:420px;background:rgba(12,16,26,0.95);border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:2.5rem;box-shadow:0 40px 80px rgba(0,0,0,0.6);}
 .auth-logo{font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:0.06em;background:linear-gradient(135deg,#fff 0%,rgba(255,255,255,0.5) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:0.25rem;}
 .auth-sub{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:2rem;}
@@ -1148,32 +1148,39 @@ let sb = null;
 let currentUser = null;
 
 async function initSupabase() {
+  // Auth screen is already visible by default — we just need to
+  // wire up Supabase and handle the session check quietly.
+
+  // Guard: make sure the Supabase CDN loaded
+  if (typeof supabase === 'undefined') {
+    setAuthMsg('Failed to load Supabase library — check your connection', 'error');
+    document.getElementById('authBtn').disabled = true;
+    return;
+  }
+
   try {
     const res = await fetch('/api/config');
-    if (!res.ok) throw new Error('Config endpoint returned ' + res.status);
-    const { url, key } = await res.json();
-    sb = supabase.createClient(url, key);
+    if (!res.ok) throw new Error('/api/config returned ' + res.status);
+    const cfg = await res.json();
+    if (!cfg.url || !cfg.key) throw new Error('Missing url or key in config response');
 
-    // Check for an existing session (restores login after refresh)
+    sb = supabase.createClient(cfg.url, cfg.key);
+
+    // Restore existing session (handles page refresh)
     const { data: { session } } = await sb.auth.getSession();
     if (session?.user) {
       showApp(session.user);
       return;
     }
 
-    // No session — reveal the auth screen now that sb is ready
-    document.getElementById('authScreen').style.display = 'flex';
-
-    // Listen for sign-in events
+    // No existing session — auth screen already visible, just wire up listener
     sb.auth.onAuthStateChange((event, session) => {
       if (session?.user) showApp(session.user);
     });
 
   } catch(e) {
-    console.error('Failed to load Supabase config:', e);
-    // Still show auth screen so user sees the error message
-    document.getElementById('authScreen').style.display = 'flex';
-    setAuthMsg('Config error — check Vercel env vars', 'error');
+    console.error('initSupabase error:', e);
+    setAuthMsg('Setup error: ' + e.message, 'error');
     document.getElementById('authBtn').disabled = true;
   }
 }
