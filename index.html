@@ -1187,8 +1187,8 @@ async function initSupabase() {
 
   } catch(e) {
     console.error('initSupabase error:', e);
-    setAuthMsg('Setup error: ' + e.message, 'error');
-    document.getElementById('authBtn').disabled = true;
+    setAuthMsg('Connection error: ' + e.message + ' — try clicking Sign In again.', 'error');
+    // Don't disable the button — authSubmit will retry initSupabase
   }
 }
 let authMode = 'signin';
@@ -1209,29 +1209,46 @@ function setAuthMsg(msg, type) {
 }
 
 async function authSubmit() {
-  if (!sb) { setAuthMsg('Still loading — please wait', 'error'); return; }
-  const email = document.getElementById('authEmail').value.trim();
+  const email    = document.getElementById('authEmail').value.trim();
   const password = document.getElementById('authPassword').value;
-  if (!email || !password) { setAuthMsg('Enter email and password', 'error'); return; }
-  const btn = document.getElementById('authBtn');
-  btn.disabled = true; btn.textContent = 'Please wait…';
+  const btn      = document.getElementById('authBtn');
+
+  if (!email || !password) { setAuthMsg('Enter email and password.', 'error'); return; }
+
+  // If sb not ready yet, try to init again before giving up
+  if (!sb) {
+    setAuthMsg('Connecting…', '');
+    btn.disabled = true;
+    await initSupabase();
+    if (!sb) {
+      setAuthMsg('Could not connect — check your internet and Vercel env vars.', 'error');
+      btn.disabled = false;
+      return;
+    }
+  }
+
+  btn.disabled = true;
+  btn.textContent = '…';
 
   try {
     if (authMode === 'signup') {
       const { error } = await sb.auth.signUp({ email, password });
       if (error) throw error;
-      setAuthMsg('Check your email for a confirmation link!', 'success');
+      setAuthMsg('✓ Check your email for a confirmation link!', 'success');
       document.getElementById('authPassword').value = '';
+      btn.disabled = false;
+      btn.textContent = 'CREATE ACCOUNT';
     } else {
-      const { error } = await sb.auth.signInWithPassword({ email, password });
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      // onAuthStateChange will handle the transition
+      // onAuthStateChange fires and calls showApp() — button stays disabled
+      // (screen will switch away, no need to re-enable)
     }
   } catch(e) {
-    setAuthMsg(e.message || 'Authentication failed', 'error');
-  } finally {
+    console.error('Auth error:', e);
+    setAuthMsg(e.message || 'Authentication failed.', 'error');
     btn.disabled = false;
-    btn.textContent = authMode==='signin' ? 'SIGN IN' : 'CREATE ACCOUNT';
+    btn.textContent = authMode === 'signin' ? 'SIGN IN' : 'CREATE ACCOUNT';
   }
 }
 
