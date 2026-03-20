@@ -832,15 +832,7 @@ function setGallerySort(order) {
     lastTap = now;
   });
 
-  // Buttons
-  document.getElementById('lbZoomIn').addEventListener('click',    () => zoomBy(1.3));
-  document.getElementById('lbZoomOut').addEventListener('click',   () => zoomBy(1/1.3));
-  document.getElementById('lbZoomReset').addEventListener('click', fitToScreen);
-  document.getElementById('lbCloseBtn').addEventListener('click',  closeLightbox);
-  document.getElementById('lbPrev').addEventListener('click', () => lbNav(-1));
-  document.getElementById('lbNext').addEventListener('click', () => lbNav(1));
-
-  // Public open
+  // Public API — defined first so button wiring below can reference them
   window.openLbSorted = function(idx) {
     const photos = window._currentSortedPhotos || [];
     if (!photos.length) return;
@@ -873,6 +865,14 @@ function setGallerySort(order) {
     lbIdx = (lbIdx + d + lbPhotos.length) % lbPhotos.length;
     window.updateLb();
   };
+
+  // Button wiring — after window.* are defined
+  document.getElementById('lbZoomIn').addEventListener('click',    () => zoomBy(1.3));
+  document.getElementById('lbZoomOut').addEventListener('click',   () => zoomBy(1/1.3));
+  document.getElementById('lbZoomReset').addEventListener('click', fitToScreen);
+  document.getElementById('lbCloseBtn').addEventListener('click',  window.closeLightbox);
+  document.getElementById('lbPrev').addEventListener('click',      () => window.lbNav(-1));
+  document.getElementById('lbNext').addEventListener('click',      () => window.lbNav(1));
 })();
 
 // ── UPLOAD PHOTOS TO CLOUDINARY ──────────────────────────────
